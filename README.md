@@ -26,15 +26,50 @@
 - **C++ Compiler** (GCC, Clang, or MSVC)
 - **Internet Connection** (For fetching Raylib and ImGui dependencies)
 
-## Build Instructions
+## Build and Run Instructions
 
-### Linux (Arch/Ubuntu/Debian)
+This project uses CMake to automatically fetch dependencies (Raylib, ImGui) and build the project.
 
-1.  **Install Dependencies** (if needed):
-    *   Arch: `sudo pacman -S cmake base-devel`
-    *   Ubuntu/Debian: `sudo apt install cmake build-essential libgl1-mesa-dev libxi-dev libxcursor-dev`
+### Windows (with Visual Studio)
 
-2.  **Build**:
+1.  **Prerequisites**:
+    *   [Visual Studio](https://visualstudio.microsoft.com/vs/community/) with the "Desktop development with C++" workload.
+    *   [CMake](https://cmake.org/download/) (select "Add CMake to the system PATH").
+    *   [Git](https://git-scm.com/download/win).
+
+2.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/Not1Sam/MazeRoboSim.git
+    cd MazeRoboSim
+    ```
+
+3.  **Configure and Build**:
+    ```bash
+    mkdir build
+    cd build
+    cmake .. -G "Visual Studio 17 2022" 
+    cmake --build . --config Release
+    ```
+    *Note: Adjust the generator `-G` if you are using a different version of Visual Studio.*
+
+4.  **Run**:
+    The executable `MazeRoboSim.exe` will be in the `build/Release` folder.
+
+### Linux (Debian/Ubuntu)
+
+1.  **Prerequisites**:
+    ```bash
+    sudo apt update
+    sudo apt install build-essential cmake libgl1-mesa-dev libxi-dev libxcursor-dev libxrandr-dev libxinerama-dev libx11-dev libglfw3-dev libopenal-dev
+    ```
+
+2.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/Not1Sam/MazeRoboSim.git
+    cd MazeRoboSim
+    ```
+    
+3.  **Configure and Build**:
     ```bash
     mkdir build
     cd build
@@ -42,24 +77,10 @@
     make
     ```
 
-3.  **Run**:
+4.  **Run**:
     ```bash
     ./MazeRoboSim
     ```
-
-### Windows
-
-1.  **Install CMake**: Download from [cmake.org](https://cmake.org/download/).
-2.  **Install Compiler**: MinGW-w64 or Visual Studio (Desktop development with C++).
-3.  **Build**:
-    ```powershell
-    mkdir build
-    cd build
-    cmake ..
-    cmake --build .
-    ```
-4.  **Run**:
-    Execute `MazeRoboSim.exe` from the `build/Debug` or `build` folder.
 
 ## Usage Guide
 

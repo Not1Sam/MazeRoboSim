@@ -1,0 +1,27 @@
+# Build artifacts
+build/
+bin/
+
+# IDE files
+.vscode/
+.idea/
+
+# Other temporary files
+*.log
+*.tmp
+*.o
+*.so
+*.a
+*.dll
+*.exe
+*.ilk
+*.pdb
+*.suo
+*.user
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
+Makefile
+imgui.ini
