@@ -6,11 +6,11 @@ set(CMAKE_CXX_STANDARD 17)
 include(FetchContent)
 
 # --- Raylib ---
+# Changed from URL 5.0 to GIT_REPOSITORY master to fix 'IsTextureValid' error
 FetchContent_Declare(
     raylib
-    URL https://github.com/raysan5/raylib/archive/refs/tags/5.0.tar.gz
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    PATCH_COMMAND sed -i "s/cmake_minimum_required(VERSION 3.0)/cmake_minimum_required(VERSION 3.5)/" <SOURCE_DIR>/CMakeLists.txt
+    GIT_REPOSITORY https://github.com/raysan5/raylib.git
+    GIT_TAG        master
 )
 FetchContent_MakeAvailable(raylib)
 
@@ -33,15 +33,6 @@ FetchContent_MakeAvailable(rlImGui)
 # --- Sources ---
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.h")
 
-# Add rlImGui source manually if needed or link library
-# rlImGui usually provides a library target if built correctly, but sometimes needs manual source addition
-# Let's check if rlImGui target exists, otherwise add sources
-if(NOT TARGET rlImGui)
-    # Fallback: Add sources manually
-    set(RLIMGUI_DIR ${rlimgui_SOURCE_DIR})
-    list(APPEND SOURCES ${RLIMGUI_DIR}/rlImGui.cpp)
-endif()
-
 # ImGui Sources
 set(IMGUI_DIR ${imgui_SOURCE_DIR})
 list(APPEND SOURCES 
@@ -52,9 +43,13 @@ list(APPEND SOURCES
     ${IMGUI_DIR}/imgui_widgets.cpp
 )
 
+# rlImGui Sources - Manual addition to ensure it compiles correctly with your project
+list(APPEND SOURCES ${rlimgui_SOURCE_DIR}/rlImGui.cpp)
+
 if(WIN32)
     add_executable(${PROJECT_NAME} WIN32 ${SOURCES})
-    target_link_libraries(${PROJECT_NAME} PRIVATE winmm gdi32 opengl32)
+    # Raylib requires these system libs on Windows
+    target_link_libraries(${PROJECT_NAME} PRIVATE winmm gdi32 opengl32 shell32)
 else()
     add_executable(${PROJECT_NAME} ${SOURCES})
 endif()
@@ -68,6 +63,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 # --- Linking ---
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
-if(TARGET rlImGui)
-    target_link_libraries(${PROJECT_NAME} PRIVATE rlImGui)
+
+if(WIN32)
+    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/ENTRY:mainCRTStartup")
 endif()
