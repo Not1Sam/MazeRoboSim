@@ -35,7 +35,7 @@ This project uses CMake to automatically fetch dependencies (Raylib, ImGui) and 
 1.  **Prerequisites**:
     *   [Visual Studio](https://visualstudio.microsoft.com/vs/community/) with the "Desktop development with C++" workload.
     *   [CMake](https://cmake.org/download/) (select "Add CMake to the system PATH").
-    *   [Git](https://git-scm.com/download/win).
+    *   [Git](https://git-scm.com/download/win) (select "Add Git to system PATH").
 
 2.  **Clone the repository**:
     ```bash
@@ -50,7 +50,7 @@ This project uses CMake to automatically fetch dependencies (Raylib, ImGui) and 
     cmake .. -G "Visual Studio 17 2022" 
     cmake --build . --config Release
     ```
-    *Note: Adjust the generator `-G` if you are using a different version of Visual Studio.*
+    *Note: Adjust the generator `-G` if you are using a different version of Visual Studio. If you encounter a `WinMain` linker error, this is already handled in the `CMakeLists.txt` for you.*
 
 4.  **Run**:
     The executable `MazeRoboSim.exe` will be in the `build/Release` folder.
@@ -61,6 +61,14 @@ This project uses CMake to automatically fetch dependencies (Raylib, ImGui) and 
     ```bash
     sudo apt update
     sudo apt install build-essential cmake libgl1-mesa-dev libxi-dev libxcursor-dev libxrandr-dev libxinerama-dev libx11-dev libglfw3-dev libopenal-dev
+    ```
+
+### Linux (Arch)
+
+1.  **Prerequisites**:
+    ```bash
+    sudo pacman -Syu
+    sudo pacman -S base-devel cmake mesa libxi libxcursor libxrandr libxinerama libx11 glfw-x11 openal
     ```
 
 2.  **Clone the repository**:
