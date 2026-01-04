@@ -36,6 +36,8 @@ private:
     float leftDist = 0;
     float rightDist = 0;
     
+    float executionTimer = 0.0f;
+    
     // Interpreter State
     void ExecuteCode();
     

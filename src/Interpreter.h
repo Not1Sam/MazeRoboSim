@@ -22,7 +22,9 @@ enum TokenType {
     TOKEN_INT,
     TOKEN_FLOAT,
     TOKEN_VOID,
-    TOKEN_WHILE
+    TOKEN_WHILE,
+    TOKEN_QUESTION, // ?
+    TOKEN_COLON     // :
 };
 
 struct Token {
@@ -44,6 +46,10 @@ public:
     void SetSensorValue(int trigPin, int echoPin, float distance);
     void SetVariable(const std::string& name, float value);
 
+
+    
+
+
 private:
     std::string source;
     std::vector<Token> tokens;
@@ -64,7 +70,9 @@ private:
     void ParseLoop();
     void ParseBlock();
     void ParseStatement();
+
     float ParseExpression();
+    float ParseComparison();
     float ParseTerm();
     float ParseFactor();
     

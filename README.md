@@ -87,7 +87,9 @@ This project uses CMake to automatically fetch dependencies (Raylib, ImGui) and 
 1.  **Design**: Configure your maze settings and click **"Proceed to Programming"**.
 2.  **Code**: Write your logic in the IDE.
     *   **Commands**: `forward()`, `backward()`, `left()` (90° Snap), `right()` (90° Snap), `stop()`.
-    *   **Variables**: `fdist` (Front), `ldist` (Left), `rdist` (Right).
+    *   **Variables**: `fdist` (Front), `ldist` (Left), `rdist` (Right), `int` variables.
+    *   **Operators**: `+`, `-`, `<`, `>`, `? :` (Ternary).
+    *   **Execution**: Commands run one at a time with a **1-second delay** for easy debugging.
     *   **Example** (Left-Hand Rule):
         ```cpp
         void loop() {

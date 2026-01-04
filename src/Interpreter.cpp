@@ -36,6 +36,8 @@ void Interpreter::SetVariable(const std::string& name, float value) {
     variables[name] = value;
 }
 
+
+
 void Interpreter::Step() {
     // Reset token pointer to start of loop()
     // For simplicity, we just re-parse the whole thing every frame looking for 'loop'
@@ -111,6 +113,8 @@ void Interpreter::Tokenize() {
                 case '=': t.type = TOKEN_ASSIGN; break;
                 case '<': t.type = TOKEN_LT; break;
                 case '>': t.type = TOKEN_GT; break;
+                case '?': t.type = TOKEN_QUESTION; break;
+                case ':': t.type = TOKEN_COLON; break;
                 default: t.type = TOKEN_EOF; break;
             }
             i++;
@@ -220,6 +224,18 @@ void Interpreter::ParseStatement() {
 }
 
 float Interpreter::ParseExpression() {
+    // Ternary: Cond ? TrueVal : FalseVal
+    float val = ParseComparison();
+    if (Match(TOKEN_QUESTION)) {
+        float trueVal = ParseExpression();
+        Match(TOKEN_COLON);
+        float falseVal = ParseExpression();
+        return (val != 0.0f) ? trueVal : falseVal;
+    }
+    return val;
+}
+
+float Interpreter::ParseComparison() {
     // Simple expression parser (A < B)
     float left = ParseTerm();
     if (Match(TOKEN_LT)) {
@@ -257,7 +273,6 @@ float Interpreter::ParseFactor() {
                 return sensorValues[(int)echo];
             }
             Match(TOKEN_RPAREN);
-            return 0;
         } else {
             Consume();
             return variables[t.text];

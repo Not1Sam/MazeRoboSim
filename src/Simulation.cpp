@@ -175,10 +175,19 @@ float Simulation::CastRay(Vector2 start, Vector2 dir) {
 }
 
 void Simulation::ExecuteCode() {
+    // Throttle execution to 1 step per second
+    if (executionTimer > 0.0f) {
+        executionTimer -= GetFrameTime();
+        return;
+    }
+    
     // Reset Command Pin
     interpreter.SetPinValue(100, 0);
     
     interpreter.Step();
+    
+    // Set timer for next step
+    executionTimer = 1.0f;
     
     // Check Command Pin
     int cmd = interpreter.GetPinValue(100);
