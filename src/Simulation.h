@@ -24,6 +24,8 @@ public:
     void Init(const MazeGenerator& maze, const std::string& code);
     void Update();
     void Draw();
+    
+    float stepDelay = 1.0f; // Seconds per step
 
 private:
     const MazeGenerator* currentMaze;

@@ -95,20 +95,23 @@ This project uses CMake to automatically fetch dependencies (Raylib, ImGui) and 
 1.  **Design**: Configure your maze settings and click **"Proceed to Programming"**.
 2.  **Code**: Write your logic in the IDE.
     *   **Commands**: `forward()`, `backward()`, `left()` (90° Snap), `right()` (90° Snap), `stop()`.
-    *   **Variables**: `fdist` (Front), `ldist` (Left), `rdist` (Right), `int` variables.
-    *   **Operators**: `+`, `-`, `<`, `>`, `? :` (Ternary).
-    *   **Execution**: Commands run one at a time with a **1-second delay** for easy debugging.
-    *   **Example** (Left-Hand Rule):
+    *   **Variables**: `fdist` (Front), `ldist` (Left), `rdist` (Right), `int` variables (e.g., `int i = 0;`).
+    *   **Control Flow**: `if`, `else if`, `else`, `while`, `do-while`, `for`.
+    *   **Operators**: `+`, `-`, `*`, `/`, `&&`, `||`, `!`, `<`, `>`, `? :`.
+    *   **Speed Control**: Use the slider in the IDE to adjust the simulation step delay (0.1s - 2.0s).
+    *   **Example** (Looping):
         ```cpp
         void loop() {
-          if (ldist > 20) {
-            left();
-            forward();
-          } else if (fdist > 20) {
-            forward();
-          } else {
-            right();
+          int i = 0;
+          while (i < 4) {
+            if (fdist > 20) {
+              forward();
+            } else {
+              right();
+            }
+            i = i + 1;
           }
         }
         ```
 3.  **Simulate**: Click **"Start Simulation"** to watch your code run!
+```

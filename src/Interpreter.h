@@ -23,8 +23,17 @@ enum TokenType {
     TOKEN_FLOAT,
     TOKEN_VOID,
     TOKEN_WHILE,
+    TOKEN_DO,       // do
+    TOKEN_FOR,      // for
     TOKEN_QUESTION, // ?
-    TOKEN_COLON     // :
+    TOKEN_COLON,    // :
+    TOKEN_AND,      // &&
+    TOKEN_OR,       // ||
+    TOKEN_NOT,      // !
+    TOKEN_PLUS,     // +
+    TOKEN_MINUS,    // -
+    TOKEN_STAR,     // *
+    TOKEN_SLASH     // /
 };
 
 struct Token {
@@ -68,14 +77,21 @@ private:
     
     // Execution
     void ParseLoop();
-    void ParseBlock();
-    void ParseStatement();
+    void ParseBlock(bool execute = true);
+    void ParseStatement(bool execute = true);
+    
+    void ParseWhile(bool execute);
+    void ParseDoWhile(bool execute);
+    void ParseFor(bool execute);
 
     float ParseExpression();
+    float ParseLogicalOr();
+    float ParseLogicalAnd();
     float ParseComparison();
-    float ParseTerm();
+    float ParseSum();
+    float ParseProduct();
     float ParseFactor();
     
     // Built-ins
-    void ExecuteFunction(const std::string& name);
+    void ExecuteFunction(const std::string& name, bool execute = true);
 };

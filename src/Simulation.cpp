@@ -126,6 +126,11 @@ void Simulation::UpdatePhysics() {
     interpreter.SetVariable("fdist", frontDist);
     interpreter.SetVariable("ldist", leftDist);
     interpreter.SetVariable("rdist", rightDist);
+    
+    // Case-insensitive / User requested aliases
+    interpreter.SetVariable("Fdist", frontDist);
+    interpreter.SetVariable("Ldist", leftDist);
+    interpreter.SetVariable("Rdist", rightDist);
 }
 
 float Simulation::CastRay(Vector2 start, Vector2 dir) {
@@ -187,7 +192,7 @@ void Simulation::ExecuteCode() {
     interpreter.Step();
     
     // Set timer for next step
-    executionTimer = 1.0f;
+    executionTimer = stepDelay;
     
     // Check Command Pin
     int cmd = interpreter.GetPinValue(100);

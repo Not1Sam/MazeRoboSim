@@ -75,6 +75,20 @@ void Interpreter::Tokenize() {
             while (i < source.length() && source[i] != '\n') i++;
             continue;
         }
+
+        if (c == '&' && i + 1 < source.length() && source[i+1] == '&') {
+            Token t; t.text = "&&"; t.type = TOKEN_AND;
+            tokens.push_back(t);
+            i += 2;
+            continue;
+        }
+
+        if (c == '|' && i + 1 < source.length() && source[i+1] == '|') {
+            Token t; t.text = "||"; t.type = TOKEN_OR;
+            tokens.push_back(t);
+            i += 2;
+            continue;
+        }
         
         Token t;
         if (isalpha(c)) {
@@ -90,6 +104,8 @@ void Interpreter::Tokenize() {
             else if (text == "float") t.type = TOKEN_FLOAT;
             else if (text == "void") t.type = TOKEN_VOID;
             else if (text == "while") t.type = TOKEN_WHILE;
+            else if (text == "do") t.type = TOKEN_DO;
+            else if (text == "for") t.type = TOKEN_FOR;
             else t.type = TOKEN_ID;
         } else if (isdigit(c)) {
             // Number
@@ -115,6 +131,11 @@ void Interpreter::Tokenize() {
                 case '>': t.type = TOKEN_GT; break;
                 case '?': t.type = TOKEN_QUESTION; break;
                 case ':': t.type = TOKEN_COLON; break;
+                case '!': t.type = TOKEN_NOT; break;
+                case '+': t.type = TOKEN_PLUS; break;
+                case '-': t.type = TOKEN_MINUS; break;
+                case '*': t.type = TOKEN_STAR; break;
+                case '/': t.type = TOKEN_SLASH; break;
                 default: t.type = TOKEN_EOF; break;
             }
             i++;
@@ -146,86 +167,253 @@ bool Interpreter::Match(TokenType type) {
 
 // --- Parser ---
 
-void Interpreter::ParseBlock() {
+void Interpreter::ParseBlock(bool execute) {
     if (Match(TOKEN_LBRACE)) {
         while (Peek().type != TOKEN_RBRACE && Peek().type != TOKEN_EOF) {
-            ParseStatement();
+            ParseStatement(execute);
         }
         Match(TOKEN_RBRACE);
     }
 }
-
-void Interpreter::ParseStatement() {
+void Interpreter::ParseStatement(bool execute) {
     Token t = Peek();
     
     if (t.type == TOKEN_INT || t.type == TOKEN_FLOAT) {
-        // Declaration: int x = 10;
+        // Declaration: int x = 10; or int x;
         Consume(); // Type
         std::string name = Consume().text;
-        Match(TOKEN_ASSIGN);
-        float val = ParseExpression();
-        variables[name] = val;
+        float val = 0.0f;
+        if (Match(TOKEN_ASSIGN)) {
+            val = ParseExpression();
+        }
+        if (execute) variables[name] = val;
         Match(TOKEN_SEMICOLON);
     } else if (t.type == TOKEN_ID) {
-        // Assignment or Function Call
+        // ... (Assignment/Call logic unchanged)
         if (Peek(1).type == TOKEN_LPAREN) {
-            // Function Call: foo();
-            ExecuteFunction(Consume().text);
+            std::string funcName = Consume().text;
+            ExecuteFunction(funcName, execute);
             Match(TOKEN_SEMICOLON);
         } else if (Peek(1).type == TOKEN_ASSIGN) {
-            // Assignment: x = 10;
             std::string name = Consume().text;
             Match(TOKEN_ASSIGN);
             float val = ParseExpression();
-            variables[name] = val;
+            if (execute) variables[name] = val;
             Match(TOKEN_SEMICOLON);
         } else {
-            Consume(); // Skip unknown
+            Consume();
         }
     } else if (t.type == TOKEN_IF) {
+        // ... (If logic unchanged)
         Consume(); // if
         Match(TOKEN_LPAREN);
         float cond = ParseExpression();
         Match(TOKEN_RPAREN);
         
-        if (cond != 0) {
-            ParseBlock();
+        bool conditionMet = execute && (cond != 0.0f);
+        
+        if (conditionMet) {
+            ParseBlock(true);
             if (Peek().type == TOKEN_ELSE) {
                 Consume();
-                // Skip else block
-                int depth = 0;
-                if (Match(TOKEN_LBRACE)) {
-                    depth = 1;
-                    while (depth > 0 && Peek().type != TOKEN_EOF) {
-                        if (Peek().type == TOKEN_LBRACE) depth++;
-                        if (Peek().type == TOKEN_RBRACE) depth--;
-                        Consume();
-                    }
-                }
+                if (Peek().type == TOKEN_IF) ParseStatement(false);
+                else ParseBlock(false);
             }
         } else {
-            // Skip if block
-            int depth = 0;
-            if (Match(TOKEN_LBRACE)) {
-                depth = 1;
-                while (depth > 0 && Peek().type != TOKEN_EOF) {
-                    if (Peek().type == TOKEN_LBRACE) depth++;
-                    if (Peek().type == TOKEN_RBRACE) depth--;
-                    Consume();
-                }
-            }
-            if (Match(TOKEN_ELSE)) {
-                ParseBlock();
+            ParseBlock(false);
+            if (Peek().type == TOKEN_ELSE) {
+                Consume();
+                if (Peek().type == TOKEN_IF) ParseStatement(execute);
+                else ParseBlock(execute);
             }
         }
+    } else if (t.type == TOKEN_WHILE) {
+        ParseWhile(execute);
+    } else if (t.type == TOKEN_DO) {
+        ParseDoWhile(execute);
+    } else if (t.type == TOKEN_FOR) {
+        ParseFor(execute);
     } else {
         Consume(); // Skip
     }
 }
 
+void Interpreter::ParseWhile(bool execute) {
+    Consume(); // while
+    int startToken = currentToken;
+    
+    // Initial check
+    Match(TOKEN_LPAREN);
+    float cond = ParseExpression();
+    Match(TOKEN_RPAREN);
+    
+    if (!execute) {
+        ParseBlock(false);
+        return;
+    }
+    
+    while (cond != 0.0f) {
+        ParseBlock(true);
+        
+        // Loop back
+        currentToken = startToken;
+        Match(TOKEN_LPAREN);
+        cond = ParseExpression();
+        Match(TOKEN_RPAREN);
+    }
+    
+    // Skip block one last time to advance
+    ParseBlock(false);
+}
+
+void Interpreter::ParseDoWhile(bool execute) {
+    Consume(); // do
+    int startToken = currentToken;
+    
+    if (!execute) {
+        ParseBlock(false);
+        Match(TOKEN_WHILE);
+        Match(TOKEN_LPAREN);
+        ParseExpression();
+        Match(TOKEN_RPAREN);
+        Match(TOKEN_SEMICOLON);
+        return;
+    }
+    
+    float cond = 0.0f;
+    do {
+        currentToken = startToken;
+        ParseBlock(true);
+        Match(TOKEN_WHILE);
+        Match(TOKEN_LPAREN);
+        cond = ParseExpression();
+        Match(TOKEN_RPAREN);
+        Match(TOKEN_SEMICOLON);
+    } while (cond != 0.0f);
+}
+
+void Interpreter::ParseFor(bool execute) {
+    Consume(); // for
+    Match(TOKEN_LPAREN);
+    
+    // Init (Run once)
+    // Can be declaration or assignment or empty
+    // Simplified: Assume declaration or assignment
+    if (Peek().type == TOKEN_INT || Peek().type == TOKEN_FLOAT) {
+        // Declaration
+        Consume(); // Type
+        std::string name = Consume().text;
+        float val = 0.0f;
+        if (Match(TOKEN_ASSIGN)) {
+            val = ParseExpression();
+        }
+        if (execute) variables[name] = val;
+        Match(TOKEN_SEMICOLON);
+    } else if (Peek().type == TOKEN_ID) {
+        // Assignment
+        std::string name = Consume().text;
+        Match(TOKEN_ASSIGN);
+        float val = ParseExpression();
+        if (execute) variables[name] = val;
+        Match(TOKEN_SEMICOLON);
+    } else {
+        Match(TOKEN_SEMICOLON); // Empty init
+    }
+    
+    int condStart = currentToken;
+    
+    // Check Condition
+    float cond = 1.0f;
+    if (Peek().type != TOKEN_SEMICOLON) {
+        cond = ParseExpression();
+    }
+    Match(TOKEN_SEMICOLON);
+    
+    int incStart = currentToken;
+    
+    // Skip Increment for now (to find body start)
+    // We need to parse it without executing to find where it ends
+    // This is tricky because we don't have a "SkipExpression" function easily.
+    // Hack: ParseExpression but ignore result? 
+    // But assignment is a statement, not expression in this parser usually?
+    // In C++, inc is an expression.
+    // Let's assume inc is "ID = Expr" or "ID++" (we don't have ++).
+    // So "i = i + 1"
+    
+    // Scan forward until RPAREN?
+    int bodyStart = currentToken;
+    int parenCount = 0;
+    while (Peek().type != TOKEN_EOF) {
+        if (Peek().type == TOKEN_LPAREN) parenCount++;
+        if (Peek().type == TOKEN_RPAREN) {
+            if (parenCount == 0) break;
+            parenCount--;
+        }
+        Consume();
+    }
+    int incEnd = currentToken; // Points to RPAREN
+    Match(TOKEN_RPAREN);
+    
+    if (!execute) {
+        ParseBlock(false);
+        return;
+    }
+    
+    // Loop
+    while (cond != 0.0f) {
+        ParseBlock(true);
+        
+        // Execute Increment
+        int savedPos = currentToken;
+        currentToken = incStart;
+        
+        // Parse Increment Expression(s)
+        // We only support "ID = Expr" style for now in this slot?
+        // Or we can reuse ParseStatement logic if it fits?
+        // ParseStatement expects semicolon. For loop inc doesn't have semicolon.
+        // Let's manually parse assignment: ID = Expr
+        if (Peek().type == TOKEN_ID && Peek(1).type == TOKEN_ASSIGN) {
+            std::string name = Consume().text;
+            Match(TOKEN_ASSIGN);
+            float val = ParseExpression();
+            variables[name] = val;
+        }
+        
+        currentToken = savedPos; // Restore to after body
+        
+        // Re-check condition
+        currentToken = condStart;
+        if (Peek().type != TOKEN_SEMICOLON) {
+            cond = ParseExpression();
+        } else {
+            cond = 1.0f;
+        }
+        
+        // Jump to body start if true
+        if (cond != 0.0f) {
+            // We need to skip init, cond, inc again to get to body?
+            // No, we are at condStart. We just parsed cond.
+            // We need to skip inc to get to body.
+            // We already know where body starts: after incEnd + 1 (RPAREN)
+            currentToken = incEnd + 1;
+        }
+    }
+    
+    // Done, move to after body
+    // We are currently at condStart (after failed check).
+    // We need to skip cond, inc, body.
+    // Actually, if cond fails, we are at SEMICOLON (after cond).
+    // We need to skip inc and body.
+    // Skip inc:
+    currentToken = incEnd + 1;
+    ParseBlock(false);
+}
+
+// ... (Rest of file)
+
 float Interpreter::ParseExpression() {
     // Ternary: Cond ? TrueVal : FalseVal
-    float val = ParseComparison();
+    float val = ParseLogicalOr();
     if (Match(TOKEN_QUESTION)) {
         float trueVal = ParseExpression();
         Match(TOKEN_COLON);
@@ -235,26 +423,73 @@ float Interpreter::ParseExpression() {
     return val;
 }
 
+float Interpreter::ParseLogicalOr() {
+    float left = ParseLogicalAnd();
+    while (Match(TOKEN_OR)) {
+        float right = ParseLogicalAnd();
+        left = ((left != 0.0f) || (right != 0.0f)) ? 1.0f : 0.0f;
+    }
+    return left;
+}
+
+float Interpreter::ParseLogicalAnd() {
+    float left = ParseComparison();
+    while (Match(TOKEN_AND)) {
+        float right = ParseComparison();
+        left = ((left != 0.0f) && (right != 0.0f)) ? 1.0f : 0.0f;
+    }
+    return left;
+}
+
 float Interpreter::ParseComparison() {
     // Simple expression parser (A < B)
-    float left = ParseTerm();
+    float left = ParseSum();
     if (Match(TOKEN_LT)) {
-        float right = ParseTerm();
+        float right = ParseSum();
         return (left < right) ? 1.0f : 0.0f;
     }
     if (Match(TOKEN_GT)) {
-        float right = ParseTerm();
+        float right = ParseSum();
         return (left > right) ? 1.0f : 0.0f;
     }
     return left;
 }
 
-float Interpreter::ParseTerm() {
-    return ParseFactor();
+float Interpreter::ParseSum() {
+    float left = ParseProduct();
+    while (Peek().type == TOKEN_PLUS || Peek().type == TOKEN_MINUS) {
+        if (Match(TOKEN_PLUS)) {
+            float right = ParseProduct();
+            left += right;
+        } else if (Match(TOKEN_MINUS)) {
+            float right = ParseProduct();
+            left -= right;
+        }
+    }
+    return left;
+}
+
+float Interpreter::ParseProduct() {
+    float left = ParseFactor();
+    while (Peek().type == TOKEN_STAR || Peek().type == TOKEN_SLASH) {
+        if (Match(TOKEN_STAR)) {
+            float right = ParseFactor();
+            left *= right;
+        } else if (Match(TOKEN_SLASH)) {
+            float right = ParseFactor();
+            if (right != 0.0f) left /= right;
+        }
+    }
+    return left;
 }
 
 float Interpreter::ParseFactor() {
     Token t = Peek();
+    if (t.type == TOKEN_NOT) {
+        Consume();
+        float val = ParseFactor();
+        return (val == 0.0f) ? 1.0f : 0.0f;
+    }
     if (t.type == TOKEN_NUMBER) {
         Consume();
         return t.numberValue;
@@ -281,34 +516,37 @@ float Interpreter::ParseFactor() {
     return 0;
 }
 
-void Interpreter::ExecuteFunction(const std::string& name) {
+void Interpreter::ExecuteFunction(const std::string& name, bool execute) {
     Match(TOKEN_LPAREN);
     if (name == "digitalWrite" || name == "analogWrite") {
         float pin = ParseExpression();
         Match(TOKEN_COMMA);
         float val = ParseExpression();
-        pinValues[(int)pin] = (int)val;
+        if (execute) pinValues[(int)pin] = (int)val;
     } else if (name == "delay") {
         ParseExpression(); // Ignore delay for now
     } else if (name == "forward") {
         // Set pins for forward
-        pinValues[5] = 255; pinValues[6] = 0;   // Left Fwd
-        pinValues[9] = 255; pinValues[10] = 0;  // Right Fwd
+        if (execute) {
+            pinValues[5] = 255; pinValues[6] = 0;   // Left Fwd
+            pinValues[9] = 255; pinValues[10] = 0;  // Right Fwd
+        }
     } else if (name == "backward") {
-        pinValues[5] = 0; pinValues[6] = 255;
-        pinValues[9] = 0; pinValues[10] = 255;
+        if (execute) {
+            pinValues[5] = 0; pinValues[6] = 255;
+            pinValues[9] = 0; pinValues[10] = 255;
+        }
     } else if (name == "left") {
         // Snap Turn Left
-        // We use a special pin or variable to signal the simulation?
-        // Or just set a "command" variable.
-        // Let's use a special pin 100 for commands: 1=Left, 2=Right
-        pinValues[100] = 1;
+        if (execute) pinValues[100] = 1;
     } else if (name == "right") {
         // Snap Turn Right
-        pinValues[100] = 2;
+        if (execute) pinValues[100] = 2;
     } else if (name == "stop") {
-        pinValues[5] = 0; pinValues[6] = 0;
-        pinValues[9] = 0; pinValues[10] = 0;
+        if (execute) {
+            pinValues[5] = 0; pinValues[6] = 0;
+            pinValues[9] = 0; pinValues[10] = 0;
+        }
     }
     Match(TOKEN_RPAREN);
 }

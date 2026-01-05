@@ -66,7 +66,7 @@ int main() {
                     
                 case STATE_IDE:
                     rlImGuiBegin();
-                    ide.Draw(generator);
+                    ide.Draw(generator, simulation);
                     
                     // Button to start simulation (Overlay)
                     ImGui::SetNextWindowPos({(float)screenWidth - 220, (float)screenHeight - 60});

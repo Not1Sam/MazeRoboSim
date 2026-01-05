@@ -1,4 +1,5 @@
 #include "IDE.h"
+#include "Simulation.h"
 #include "imgui.h"
 #include "rlImGui.h"
 #include <cstring>
@@ -6,20 +7,59 @@
 IDE::IDE() {
     // Default code
     code = "void loop() {\n"
-           "  // Left-Hand Rule Algorithm\n"
-           "  if (ldist > 20) {\n"
-           "    left();\n"
-           "    forward();\n"
-           "  } else if (fdist > 20) {\n"
-           "    forward();\n"
-           "  } else {\n"
-           "    right();\n"
-           "  }\n"
+           "    if (ldist > 30) {\n"
+           "        left();\n"
+           "        forward();\n"
+           "    } else if (rdist > 30) {\n"
+           "        right();\n"
+           "        forward();\n"
+           "    } else if (Fdist > 30) {\n"
+           "        forward();\n"
+           "    } else if (Fdist < 30 && ldist < 30 && rdist < 30) {\n"
+           "        right();\n"
+           "        right();\n"
+           "    }\n"
            "}\n";
     goBack = false;
 }
 
-void IDE::Draw(MazeGenerator& maze) {
+void IDE::AutoFormat() {
+    std::string formatted;
+    int indent = 0;
+    bool newLine = true;
+    
+    for (int i = 0; i < code.length(); i++) {
+        char c = code[i];
+        
+        if (c == '{') {
+            formatted += " {\n";
+            indent++;
+            newLine = true;
+        } else if (c == '}') {
+            indent--;
+            if (!newLine) formatted += "\n";
+            for (int j = 0; j < indent; j++) formatted += "    ";
+            formatted += "}\n";
+            newLine = true;
+        } else if (c == ';') {
+            formatted += ";\n";
+            newLine = true;
+        } else if (c == '\n') {
+            // Skip existing newlines to avoid double spacing
+        } else {
+            if (newLine) {
+                for (int j = 0; j < indent; j++) formatted += "    ";
+                newLine = false;
+            }
+            // Skip multiple spaces
+            if (c == ' ' && i + 1 < code.length() && code[i+1] == ' ') continue;
+            formatted += c;
+        }
+    }
+    code = formatted;
+}
+
+void IDE::Draw(MazeGenerator& maze, Simulation& simulation) {
     int screenWidth = GetScreenWidth();
     int screenHeight = GetScreenHeight();
     
@@ -42,12 +82,21 @@ void IDE::Draw(MazeGenerator& maze) {
     static char codeBuffer[4096];
     if (code.length() < 4096) strcpy(codeBuffer, code.c_str());
     
-    if (ImGui::InputTextMultiline("##code", codeBuffer, 4096, {(float)halfWidth - 20, (float)screenHeight - 100}, ImGuiInputTextFlags_AllowTabInput)) {
+    if (ImGui::InputTextMultiline("##code", codeBuffer, 4096, {(float)halfWidth - 20, (float)screenHeight - 140}, ImGuiInputTextFlags_AllowTabInput)) {
         code = std::string(codeBuffer);
     }
     
+    // Speed Control
+    ImGui::Text("Simulation Speed (Step Delay):");
+    ImGui::SliderFloat("##speed", &simulation.stepDelay, 0.1f, 2.0f, "%.1f s");
+    
     if (ImGui::Button("<- Back to Maze Generator")) {
         goBack = true;
+    }
+    
+    ImGui::SameLine();
+    if (ImGui::Button("Format Code")) {
+        AutoFormat();
     }
     
     ImGui::End();
