@@ -253,6 +253,7 @@ void Interpreter::ParseWhile(bool execute) {
     }
     
     while (cond != 0.0f) {
+        if (updateCallback) updateCallback();
         ParseBlock(true);
         
         // Loop back
@@ -282,6 +283,7 @@ void Interpreter::ParseDoWhile(bool execute) {
     
     float cond = 0.0f;
     do {
+        if (updateCallback) updateCallback();
         currentToken = startToken;
         ParseBlock(true);
         Match(TOKEN_WHILE);
@@ -361,6 +363,7 @@ void Interpreter::ParseFor(bool execute) {
     
     // Loop
     while (cond != 0.0f) {
+        if (updateCallback) updateCallback();
         ParseBlock(true);
         
         // Execute Increment

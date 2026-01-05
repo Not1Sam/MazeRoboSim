@@ -11,8 +11,14 @@ Simulation::Simulation() {
 void Simulation::Init(const MazeGenerator& maze, const std::string& code) {
     currentMaze = &maze;
     currentCode = code;
+    interpreter.Load(code);
     
-    // Spawn Robot at Bottom Center (Grid Coordinates)
+    // Bind Physics Update to Interpreter Loop
+    interpreter.updateCallback = [this]() {
+        UpdatePhysics();
+    };
+    
+    // Reset Robot at Bottom Center (Grid Coordinates)
     // x: 0 to width, y: 0 to height
     // Center of cell (x, y) is (x + 0.5, y + 0.5)
     
@@ -204,16 +210,8 @@ void Simulation::ExecuteCode() {
         if (cmd == 1) robot.rotation -= 90.0f; // Left
         if (cmd == 2) robot.rotation += 90.0f; // Right
         
-        // Move Forward 1 Cell (if clear)
-        Vector2 fwd = { cosf(DEG2RAD * robot.rotation), sinf(DEG2RAD * robot.rotation) };
-        
-        // Simple check: Is there a wall?
-        // We can use CastRay. If distance > 0.6 (just more than half cell), it's safe.
-        // Actually, let's just check the cell.
-        float dist = CastRay(robot.position, fwd);
-        if (dist >= 1.0f) {
-            robot.position = Vector2Add(robot.position, fwd);
-        }
+        // Removed automatic forward movement to prevent wall clipping.
+        // Forward movement is now handled solely by the forward() command via physics.
     }
     
     // Map Pins to Motors (Only if no snap turn command?)

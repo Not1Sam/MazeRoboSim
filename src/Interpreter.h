@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <functional>
 
 enum TokenType {
     TOKEN_EOF,
@@ -54,6 +55,8 @@ public:
     void SetPinValue(int pin, int value);
     void SetSensorValue(int trigPin, int echoPin, float distance);
     void SetVariable(const std::string& name, float value);
+
+    std::function<void()> updateCallback;
 
 
     
