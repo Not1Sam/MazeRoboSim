@@ -1,21 +1,8 @@
 #pragma once
-#include "raylib.h"
 #include "MazeGenerator.h"
 #include "Interpreter.h"
+#include "raylib.h"
 #include <string>
-#include <vector>
-
-struct Robot {
-    Vector2 position;
-    float rotation; // Degrees
-    float speedLeft;
-    float speedRight;
-    
-    // Sensors
-    float distFront;
-    float distLeft;
-    float distRight;
-};
 
 class Simulation {
 public:
@@ -25,25 +12,31 @@ public:
     void Update();
     void Draw();
     
+    // Robot State
+    struct Robot {
+        Vector2 position; // Grid coordinates
+        float rotation;   // Degrees (0 = East, 90 = South)
+        float speedLeft;
+        float speedRight;
+    };
+    Robot robot;
+    
+    float frontDist;
+    float leftDist;
+    float rightDist;
+    
+    // Config
     float stepDelay = 1.0f; // Seconds per step
-
+    
 private:
     const MazeGenerator* currentMaze;
     std::string currentCode;
-    Robot robot;
     Interpreter interpreter;
-    
-    // Sensor Data
-    float frontDist = 0;
-    float leftDist = 0;
-    float rightDist = 0;
     
     float executionTimer = 0.0f;
     
-    // Interpreter State
-    void ExecuteCode();
-    
-    // Physics
     void UpdatePhysics();
+    void ExecuteCode();
+    void ReadPins();
     float CastRay(Vector2 start, Vector2 dir);
 };

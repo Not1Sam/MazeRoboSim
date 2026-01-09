@@ -9,8 +9,8 @@ include(FetchContent)
 # Changed from URL 5.0 to GIT_REPOSITORY master to fix 'IsTextureValid' error
 FetchContent_Declare(
     raylib
-    GIT_REPOSITORY https://github.com/raysan5/raylib.git
-    GIT_TAG        master
+    URL https://github.com/raysan5/raylib/archive/refs/heads/master.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 FetchContent_MakeAvailable(raylib)
 
